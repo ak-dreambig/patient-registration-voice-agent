@@ -1,1 +1,99 @@
-{"TODO": "Vapi tool definitions - written separately."}
+[
+  {
+    "type": "function",
+    "async": false,
+    "function": {
+      "name": "find_patient_by_phone",
+      "description": "Look up whether a patient already exists with this phone number. Call this as soon as the caller gives a valid 10-digit phone number, before collecting the rest of their details.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "phone_number": {
+            "type": "string",
+            "description": "The caller's 10-digit U.S. phone number, digits only, e.g. 2125550143."
+          }
+        },
+        "required": ["phone_number"]
+      }
+    },
+    "server": {
+      "url": "https://YOUR-RAILWAY-DOMAIN/vapi/webhook",
+      "timeoutSeconds": 20
+    }
+  },
+  {
+    "type": "function",
+    "async": false,
+    "function": {
+      "name": "create_patient",
+      "description": "Register a new patient. Only call this after reading all details back to the caller and receiving clear confirmation that everything is correct.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "first_name": { "type": "string", "description": "Patient first name." },
+          "last_name": { "type": "string", "description": "Patient last name, spelled as confirmed by the caller." },
+          "date_of_birth": { "type": "string", "description": "Date of birth in MM/DD/YYYY format." },
+          "sex": { "type": "string", "enum": ["Male", "Female", "Other", "Decline to Answer"], "description": "Sex for the medical record." },
+          "phone_number": { "type": "string", "description": "10-digit U.S. phone number, digits only." },
+          "email": { "type": "string", "description": "Email address. Omit if not provided." },
+          "address_line_1": { "type": "string", "description": "Street address." },
+          "address_line_2": { "type": "string", "description": "Apartment, suite, or unit. Omit if none." },
+          "city": { "type": "string", "description": "City." },
+          "state": { "type": "string", "description": "Two-letter U.S. state code, e.g. TX." },
+          "zip_code": { "type": "string", "description": "5-digit ZIP or ZIP+4, e.g. 78701 or 78701-1234." },
+          "insurance_provider": { "type": "string", "description": "Insurance company name. Omit if not provided." },
+          "insurance_member_id": { "type": "string", "description": "Insurance member or subscriber ID. Omit if not provided." },
+          "preferred_language": { "type": "string", "description": "Preferred language. Defaults to English." },
+          "emergency_contact_name": { "type": "string", "description": "Emergency contact full name. Omit if not provided." },
+          "emergency_contact_phone": { "type": "string", "description": "Emergency contact 10-digit phone number, digits only. Omit if not provided." }
+        },
+        "required": ["first_name", "last_name", "date_of_birth", "sex", "phone_number", "address_line_1", "city", "state", "zip_code"]
+      }
+    },
+    "messages": [
+      { "type": "request-response-delayed", "content": "Just a moment, still saving that for you.", "timingMilliseconds": 3000 }
+    ],
+    "server": {
+      "url": "https://YOUR-RAILWAY-DOMAIN/vapi/webhook",
+      "timeoutSeconds": 20
+    }
+  },
+  {
+    "type": "function",
+    "async": false,
+    "function": {
+      "name": "update_patient",
+      "description": "Update an existing patient's record. Only call this for a returning caller whose date of birth matched the record, after reading back the changes and receiving clear confirmation. Send only the fields that changed.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "patient_id": { "type": "string", "description": "The patient_id returned by find_patient_by_phone." },
+          "first_name": { "type": "string" },
+          "last_name": { "type": "string" },
+          "date_of_birth": { "type": "string", "description": "MM/DD/YYYY." },
+          "sex": { "type": "string", "enum": ["Male", "Female", "Other", "Decline to Answer"] },
+          "phone_number": { "type": "string", "description": "10 digits only." },
+          "email": { "type": "string" },
+          "address_line_1": { "type": "string" },
+          "address_line_2": { "type": "string" },
+          "city": { "type": "string" },
+          "state": { "type": "string", "description": "Two-letter code." },
+          "zip_code": { "type": "string" },
+          "insurance_provider": { "type": "string" },
+          "insurance_member_id": { "type": "string" },
+          "preferred_language": { "type": "string" },
+          "emergency_contact_name": { "type": "string" },
+          "emergency_contact_phone": { "type": "string", "description": "10 digits only." }
+        },
+        "required": ["patient_id"]
+      }
+    },
+    "messages": [
+      { "type": "request-response-delayed", "content": "Just a moment, still updating that for you.", "timingMilliseconds": 3000 }
+    ],
+    "server": {
+      "url": "https://YOUR-RAILWAY-DOMAIN/vapi/webhook",
+      "timeoutSeconds": 20
+    }
+  }
+]
