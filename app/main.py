@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import models  # noqa: F401  (registers tables on Base.metadata)
-from app.api import patients
+from app.api import patients, vapi
 from app.config import get_settings
 from app.db import Base, engine, get_db
 from app.logging_config import configure_logging
@@ -77,6 +77,7 @@ def create_app() -> FastAPI:
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
     register_exception_handlers(app)
     app.include_router(patients.router)
+    app.include_router(vapi.router)
 
     @app.get("/health", tags=["health"])
     def health(db: Session = Depends(get_db)) -> JSONResponse:

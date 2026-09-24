@@ -34,7 +34,15 @@ def build_engine(url: str) -> Engine:
             # One shared connection so every session sees the same in-memory DB (tests).
             return create_engine(url, connect_args=connect_args, poolclass=StaticPool)
         return create_engine(url, connect_args=connect_args)
-    return create_engine(url, pool_pre_ping=True, pool_size=5, max_overflow=5)
+    # Short timeouts so a slow DB yields a fast SYSTEM_ERROR instead of a Vapi tool timeout.
+    return create_engine(
+        url,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=5,
+        pool_timeout=5,
+        connect_args={"connect_timeout": 5, "options": "-c statement_timeout=5000"},
+    )
 
 
 engine = build_engine(normalize_database_url(get_settings().database_url))
