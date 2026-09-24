@@ -11,6 +11,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app import models  # noqa: F401  (registers tables on Base.metadata)
 from app.db import Base, engine, get_db
 from app.logging_config import configure_logging
 from app.responses import fail, ok
