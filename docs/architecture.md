@@ -1,5 +1,7 @@
 # Architecture
 
+![Architecture](architecture.png)
+
 This document goes deeper than the [README](../README.md): the components, one registration call end to end, the data model, and how errors are contained.
 
 ## 1. Components

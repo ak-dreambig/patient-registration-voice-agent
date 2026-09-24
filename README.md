@@ -299,6 +299,7 @@ pytest -q
 - **Names allow internal spaces** ("Mary Ann"), a deliberate relaxation of a strict letters/hyphens/apostrophes rule.
 - **Calls with no saved patient** are stored in `call_logs`, but they're only visible in the database and logs. The dashboard and API show calls linked to a patient.
 - **Soft-deleted records** stay in the database and can't be restored through the API.
+- Uses Vapi-managed provider keys (OpenAI, Deepgram, ElevenLabs) for speed of setup; production would use our own provider keys for cost control and vendor flexibility.
 
 ## Next Steps
 
