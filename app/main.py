@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -87,6 +87,11 @@ def create_app() -> FastAPI:
     app.include_router(patients.router)
     app.include_router(vapi.router)
     app.include_router(dashboard.router)
+
+    @app.get("/", include_in_schema=False)
+    def root() -> RedirectResponse:
+        """Send visitors to the dashboard."""
+        return RedirectResponse(url="/dashboard")
 
     @app.get("/health", tags=["health"])
     def health(db: Session = Depends(get_db)) -> JSONResponse:
