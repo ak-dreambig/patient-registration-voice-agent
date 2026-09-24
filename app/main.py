@@ -13,9 +13,9 @@ from sqlalchemy.orm import Session
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import models  # noqa: F401  (registers tables on Base.metadata)
-from app.api import patients, vapi
+from app.api import dashboard, patients, vapi
 from app.config import get_settings
-from app.db import Base, engine, get_db
+from app.db import Base, SessionLocal, engine, get_db
 from app.logging_config import configure_logging
 from app.responses import fail, ok
 from app.schemas import error_details
@@ -26,8 +26,16 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-    """Create tables on startup (no migrations; see README trade-offs)."""
+    """Create tables on startup (no migrations; see README trade-offs); optionally seed demo data."""
     Base.metadata.create_all(bind=engine)
+    if get_settings().seed_demo_data:
+        from scripts.seed import seed_if_empty
+
+        try:
+            with SessionLocal() as db:
+                seed_if_empty(db)
+        except Exception:
+            logger.exception("demo_seed_failed")
     yield
 
 
@@ -78,6 +86,7 @@ def create_app() -> FastAPI:
     register_exception_handlers(app)
     app.include_router(patients.router)
     app.include_router(vapi.router)
+    app.include_router(dashboard.router)
 
     @app.get("/health", tags=["health"])
     def health(db: Session = Depends(get_db)) -> JSONResponse:

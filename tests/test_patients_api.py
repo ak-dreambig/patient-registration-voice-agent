@@ -129,3 +129,25 @@ def test_patient_calls_empty(client: TestClient) -> None:
     assert resp.status_code == 200
     assert resp.json()["data"] == []
     assert client.get(f"/patients/{uuid.uuid4()}/calls").status_code == 404
+
+
+def test_dashboard_renders_and_searches(client: TestClient) -> None:
+    _create(client, insurance_provider="Example Health")
+    _create(client, first_name="John", last_name="Smith", phone_number="3125550188")
+    html = client.get("/dashboard").text
+    assert "2 registered patients" in html
+    assert "(212) 555-0143" in html and "Example Health" in html
+    by_name = client.get("/dashboard?q=smi").text
+    assert "John Smith" in by_name and "Jane Doe" not in by_name
+    by_phone = client.get("/dashboard?q=212-555").text
+    assert "Jane Doe" in by_phone and "John Smith" not in by_phone
+
+
+def test_seed_only_when_empty(client: TestClient) -> None:
+    from app.db import SessionLocal
+    from scripts.seed import seed_if_empty
+
+    with SessionLocal() as db:
+        assert seed_if_empty(db) == 2
+        assert seed_if_empty(db) == 0
+    assert len(client.get("/patients").json()["data"]) == 2

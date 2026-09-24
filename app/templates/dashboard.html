@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="15">
+  <title>Patient Registry</title>
+  <style>
+    :root { --bg: #f6f7f9; --card: #fff; --text: #1f2933; --muted: #616e7c; --line: #e4e7eb; --accent: #2563eb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--text); }
+    header { background: var(--card); border-bottom: 1px solid var(--line); padding: 16px 24px; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+    h1 { font-size: 18px; margin: 0; }
+    .meta { color: var(--muted); font-size: 13px; }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    main { max-width: 1200px; margin: 0 auto; padding: 20px 16px; }
+    form { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    input[type=search] { flex: 1 1 260px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+    button { padding: 8px 14px; border: 0; border-radius: 6px; background: var(--accent); color: #fff; font: inherit; cursor: pointer; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .row { border-bottom: 1px solid var(--line); }
+    .row:last-child { border-bottom: 0; }
+    .grid { display: grid; grid-template-columns: 1.4fr 0.9fr 0.8fr 1.1fr 1.1fr 1.1fr 1.2fr; gap: 12px; padding: 10px 16px; align-items: center; }
+    .head { font-weight: 600; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .03em; background: #fafbfc; border-bottom: 1px solid var(--line); }
+    summary { list-style: none; cursor: pointer; }
+    summary::-webkit-details-marker { display: none; }
+    summary:hover { background: #f9fafb; }
+    details[open] summary { background: #f3f6fd; }
+    .detail { padding: 12px 16px 16px; background: #fcfcfd; }
+    dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 12px; }
+    dt { color: var(--muted); }
+    dd { margin: 0; }
+    h3 { font-size: 13px; margin: 12px 0 6px; }
+    .call { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; margin-bottom: 8px; background: var(--card); }
+    pre { white-space: pre-wrap; font: 12px/1.45 ui-monospace, Consolas, monospace; background: #f4f5f7; padding: 8px; border-radius: 4px; max-height: 280px; overflow: auto; margin: 6px 0 0; }
+    .empty { padding: 24px; text-align: center; color: var(--muted); }
+    .label { display: none; color: var(--muted); font-size: 12px; }
+    @media (max-width: 800px) {
+      .head { display: none; }
+      .grid { grid-template-columns: 1fr 1fr; gap: 4px 12px; }
+      .label { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Patient Registration — Voice Agent</h1>
+      <div class="meta">{{ total }} registered patient{{ "" if total == 1 else "s" }} · auto-refreshes every 15s</div>
+    </div>
+    <nav class="meta"><a href="/docs">API docs (Swagger)</a></nav>
+  </header>
+  <main>
+    <form method="get" action="/dashboard">
+      <input type="search" name="q" value="{{ q }}" placeholder="Search by last name or phone number" aria-label="Search">
+      <button type="submit">Search</button>
+      {% if q %}<a href="/dashboard" style="align-self:center">Clear</a>{% endif %}
+    </form>
+    <div class="card">
+      <div class="grid head">
+        <div>Name</div><div>DOB</div><div>Sex</div><div>Phone</div><div>City / State</div><div>Insurance</div><div>Created</div>
+      </div>
+      {% for p in patients %}
+      <details class="row">
+        <summary class="grid">
+          <div><strong>{{ p.first_name }} {{ p.last_name }}</strong></div>
+          <div><span class="label">DOB</span>{{ p.date_of_birth | dob }}</div>
+          <div><span class="label">Sex</span>{{ p.sex.value }}</div>
+          <div><span class="label">Phone</span>{{ p.phone_number | phone }}</div>
+          <div><span class="label">Location</span>{{ p.city }}, {{ p.state }}</div>
+          <div><span class="label">Insurance</span>{{ p.insurance_provider or "—" }}</div>
+          <div><span class="label">Created</span>{{ p.created_at | utc }}</div>
+        </summary>
+        <div class="detail">
+          <dl>
+            <dt>Patient ID</dt><dd>{{ p.patient_id }}</dd>
+            <dt>Email</dt><dd>{{ p.email or "—" }}</dd>
+            <dt>Address</dt><dd>{{ p.address_line_1 }}{% if p.address_line_2 %}, {{ p.address_line_2 }}{% endif %}, {{ p.city }}, {{ p.state }} {{ p.zip_code }}</dd>
+            <dt>Insurance</dt><dd>{{ p.insurance_provider or "—" }}{% if p.insurance_member_id %} (member ID {{ p.insurance_member_id }}){% endif %}</dd>
+            <dt>Preferred language</dt><dd>{{ p.preferred_language }}</dd>
+            <dt>Emergency contact</dt><dd>{% if p.emergency_contact_name or p.emergency_contact_phone %}{{ p.emergency_contact_name or "" }} {{ p.emergency_contact_phone | phone }}{% else %}—{% endif %}</dd>
+            <dt>Updated</dt><dd>{{ p.updated_at | utc }}</dd>
+          </dl>
+          <h3>Calls ({{ p.calls | length }})</h3>
+          {% for c in p.calls %}
+          <div class="call">
+            <div class="meta">{{ c.created_at | utc }} · {{ c.ended_reason or "in progress" }} · {{ c.vapi_call_id }}</div>
+            {% if c.summary %}<div>{{ c.summary }}</div>{% endif %}
+            {% if c.transcript %}<details><summary><a>Transcript</a></summary><pre>{{ c.transcript }}</pre></details>{% endif %}
+          </div>
+          {% else %}
+          <div class="meta">No linked calls.</div>
+          {% endfor %}
+        </div>
+      </details>
+      {% else %}
+      <div class="empty">{% if q %}No patients match “{{ q }}”.{% else %}No patients registered yet.{% endif %}</div>
+      {% endfor %}
+    </div>
+  </main>
+</body>
+</html>
