@@ -140,6 +140,8 @@ def test_other_message_types_ignored(client: TestClient) -> None:
 def test_wrong_secret_returns_401(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(get_settings(), "vapi_secret", "s3cret")
     payload = tool_call("find_patient_by_phone", {"phone_number": "2125550143"})
-    assert client.post("/vapi/webhook", json=payload, headers={"x-vapi-secret": "wrong"}).status_code == 401
+    wrong = client.post("/vapi/webhook", json=payload, headers={"x-vapi-secret": "wrong"})
+    assert wrong.status_code == 401
+    assert wrong.json()["error"]["code"] == "unauthorized"
     assert client.post("/vapi/webhook", json=payload).status_code == 401
     assert client.post("/vapi/webhook", json=payload, headers={"x-vapi-secret": "s3cret"}).status_code == 200
